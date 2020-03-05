@@ -37,7 +37,7 @@ public class UpdateNotifier {
         }
 
         BufferedInputStream inputStream = new BufferedInputStream(new URL(Constants.kUpdateUrl).openStream());
-        FileOutputStream fileOS = new FileOutputStream(CommonUtils.getCurrentDir() + "\\version.txt");
+        FileOutputStream fileOS = new FileOutputStream(CommonUtils.getCurrentDir() + File.separator + "version.txt");
 
         byte[] data = new byte[1024];
         int byteContent;
@@ -88,13 +88,7 @@ public class UpdateNotifier {
             boolean confirm = alertUtils.createAlert("New Version Available", "An update is available!", "Version " + version + " is available!\n" + Constants.kReleaseUrl);
 
             if (confirm) {
-                try {
-                    Desktop.getDesktop().browse(new URL(Constants.kReleaseUrl).toURI());
-
-                } catch (IOException | URISyntaxException e) {
-                    LoggingUtils.log(Level.SEVERE, e);
-
-                }
+                CommonUtils.application.getHostServices().showDocument(Constants.kReleaseUrl);
             }
 
         }

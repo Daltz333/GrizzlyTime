@@ -4,6 +4,7 @@ import activities.LocalDbActivity;
 
 public class Constants {
     //spreadsheet layout
+    public static final int kEthnicityColumn = 11;
     public static final int kLoggedInColumn = 10;
     public static final int kTotalHoursColumn = 9;
     public static final int kHoursColumn = 8;
@@ -65,7 +66,7 @@ public class Constants {
     public static final boolean kCreditsBearPreserveRatio = true;
     public static final int kCreditsWrapTextWidth = 285;
 
-    public static final String kVersion = "2.0.1";
+    public static final String kVersion = "2.3.0";
 
     //splash constants
     public static final int kSplashWidth = 390;
@@ -74,8 +75,8 @@ public class Constants {
     //grizzly robotics specific
     public static final boolean kMentorFallback = true;
 
-    public static final String kUpdateUrl = "https://raw.githubusercontent.com/Daltz333/GrizzlyTime-JavaFX/master/version.txt";
-    public static final String kReleaseUrl = "https://tinyurl.com/grizzlyupdate";
+    public static final String kUpdateUrl = "https://raw.githubusercontent.com/YCSRobotics/GrizzlyTime-JavaFX/master/version.txt";
+    public static final String kReleaseUrl = "https://github.com/YCSRobotics/GrizzlyTime-JavaFX/wiki/5.-Updating-GrizzlyTime";
 
     //user states
     public static final int kIdDoesNotExist = -1;

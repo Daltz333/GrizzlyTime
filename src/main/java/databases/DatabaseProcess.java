@@ -3,7 +3,6 @@ package databases;
 import activities.LocalDbActivity;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -19,12 +18,12 @@ import helpers.AlertUtils;
 import helpers.CommonUtils;
 import helpers.Constants;
 import helpers.LoggingUtils;
+import javafx.application.HostServices;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.NoRouteToHostException;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,12 +58,18 @@ public class DatabaseProcess {
 
     //based upon the Java Google Sheets quickstart
     //settings google sheets logging level to SEVERE only
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private static <LocalServerReceiver> Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         //set google logging level to severe due to permissions bug, see https://github.com/googleapis/google-http-java-client/issues/315
         java.util.logging.Logger.getLogger(FileDataStoreFactory.class.getName()).setLevel(Level.SEVERE);
 
         // Load client secrets.
         InputStream in = DatabaseProcess.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+
+        if (in == null) {
+            LoggingUtils.log(Level.SEVERE, "Credentials file was not loaded, check that the credentials file is in the resources directory!");
+            CommonUtils.exitApplication();
+        }
+
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
@@ -73,8 +78,21 @@ public class DatabaseProcess {
                 .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
                 .setAccessType("offline")
                 .build();
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+
+        return new AuthorizationCodeInstalledApp(flow, new com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver(), new AuthorizationCodeInstalledApp.Browser() {
+            @Override
+            public void browse(String url) {
+                LoggingUtils.log(Level.INFO, "Or navigate to " + url + " to authorize the application.");
+                //fix for java8 launching on linux because weird shit
+                HostServices hostServices = CommonUtils.application.getHostServices();
+                try {
+                    hostServices.showDocument(url);
+                } catch (NullPointerException e) {
+                    LoggingUtils.log(Level.INFO, "HostServices failed, please navigate to " + url + " to authorize the application.");
+                }
+
+            }
+        }).authorize("user");
     }
 
     //return a list of rows and columns of a specified sheet
@@ -198,13 +216,16 @@ public class DatabaseProcess {
                     .get(spreadsheet, range)
                     .execute();
 
-        } catch (GoogleJsonResponseException e) {
-            LoggingUtils.log(Level.SEVERE, e);
-            if (e.getDetails().getMessage().contains("not found")) {
-                util.createAlert("ERROR", "Spreadsheet does not exist!", "Check your spreadsheet ID and confirm that it's valid!");
-            }
-
+        } catch (NoRouteToHostException e) {
+            LoggingUtils.log(Level.SEVERE, "No route to host!");
+            util.createAlert("ERROR", "No Route to Host", "Unable to connect to the database, check internet connection and restart the application.");
             CommonUtils.exitApplication();
+
+        } catch (SocketTimeoutException e) {
+            LoggingUtils.log(Level.SEVERE, "Connection timed out!");
+            util.createAlert("ERROR", "Connection timed out", "Connecting to database took too long! Please check your internet connection and retry!");
+            CommonUtils.exitApplication();
+
         }
 
         if (response.getValues() == null) {

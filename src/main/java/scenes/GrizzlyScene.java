@@ -26,6 +26,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.net.NoRouteToHostException;
 import java.util.logging.Level;
 
 public class GrizzlyScene {
@@ -61,7 +62,7 @@ public class GrizzlyScene {
 
     public GrizzlyScene() {
         Image splash;
-        File file = new File(CommonUtils.getCurrentDir() + "\\images\\error.png");
+        File file = new File(CommonUtils.getCurrentDir() + File.separator + "images" + File.separator + "error.png");
 
         //check for custom splash
         if (file.exists()) {
@@ -136,6 +137,8 @@ public class GrizzlyScene {
     }
 
     public void reShowUI(GridPane root) {
+        root.setId("main");
+
         //add to root pane
         root.add(imageView, 0, 0);
         root.add(subRoot, 0, 1);
@@ -239,6 +242,9 @@ public class GrizzlyScene {
 
             } catch (ConnectToWorksheetException e) {
                 setMessageBoxText("There was an error connecting to the database. Please retry.");
+
+            } catch (NoRouteToHostException e) {
+                setMessageBoxText("Unable to connect to database. Check internet and retry.");
 
             } catch (Exception e) {
                 LoggingUtils.log(Level.SEVERE, e);
